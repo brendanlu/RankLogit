@@ -55,6 +55,7 @@ def permuteexpression(t, dp):
     for i in range(n):
         numerator *= a[i]
 
+    # https://en.wikipedia.org/wiki/Heap%27s_algorithm
     # Generate the remaining permutations
     i = 1
     while i < n:
