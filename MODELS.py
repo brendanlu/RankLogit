@@ -58,22 +58,25 @@ class TiedRankingLogitModel:
         to a maximum of j, each in the list index corresponding to an outcome specified
         in the parameters input.
         """
-        # NOTE: Currently does not have efficient valid input checking facilities.
-        # Use with care, and ensure input observed rankings are valid.
+        # NOTE: Integer input currently based on Q CID output format
+        # Highest integer corresponds to 'best' ranked variable. 
+        # Then each subsequent lower integer (does not have to be sequential) is a lower level of preference.
+        
         llhood: float = 1.0  # product of llhoods, so we start with 1
 
-        if len(set(observed_ranking)) == 1:
+        if len(set(observed_ranking)) == 1: # This ensures we do not get stuck in an infinite loop below, as ensures there are two distinct ranks.
+                                            # THIS IS NOT THE BEST - NEEDS FIX
             return llhood
 
         exponentiated_params = [exp(x) for x in self.parameters]
 
         enumerated = list(enumerate(observed_ranking))
-        i = max(observed_ranking)
+        i = max(observed_ranking) # start with highest number in input tuple, and iterate down.
         while True:  # outer product
             tied_ranks_indexes = [index for index, number in enumerated if number == i]
             if len(tied_ranks_indexes) == 0:
                 i -= 1
-                continue
+                continue # continue through, but keep checking for lower integers
             lower_ranks_indexes = [index for index, number in enumerated if number < i]
             if len(lower_ranks_indexes) == 0:
                 break  # we are on the last ranking, and there is no llhood term
