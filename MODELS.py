@@ -1,3 +1,12 @@
+"""
+The code here is quite clunky. 
+
+Sooner or later, I will rewrite it to be somewhat sklearn compatible, and delete redundant things. 
+sklearn has neat naming conventions, a nice estimator base class, and parameter validation conventions. 
+
+Will need to implement partial likelihood estsimation here as well. 
+"""
+
 import numpy as np
 from math import exp
 from typing import Tuple
@@ -10,30 +19,28 @@ import permute_jk
 
 class TiedRankingLogitModel:
     """
-    Here, we list some assumptions about the use of this function object.
+    Link to paper:
+    https://statisticalhorizons.com/wp-content/uploads/2022/01/AllisonChristakis.pdf
+    
+    Here, we list some assumptions about the use of this class.
     
     1) We assume that there are no 'empty' response fields.
 
-    2) We also assume we are exponent-iating a common linear index function.
-    Nice and simple, with each index weight applied to a possible multinomial choice.
-    Refer to 5.1 of the paper, in the example. 
+    2) We also assume we are exponent-iating a common linear index function
+     - with each index weight applied to a possible multinomial choice.
+    Refer to 5.1 of the paper, in their provided example. 
 
-    3) Thus, the parameters input should be an array, with each element corresponding to
+    3) The parameters input should be an array, with each element corresponding to
     the linear index weight (signed). This ordering of categories is arbitrary, but should
     be the same as the observed_rankings input.
         - it will be good to provide, in comments, a mapping of the index value in the list
-          to the actual meaning of that index. i.e. 0: find property stressful
-        - page 210 mu_ij form
+          to some category names. 
+        - Refer to page 210 for this mu_ij form
 
-    4) And how Q does it, it seems, is to pivot on one of the outcomes.
+    4) Existimg implementation for estimation: Q estimates it by pivoting on one of the outcomes.
     So, we assume that parameters[0] == 0 all the time. We also calculate the llhoods
     based on this pivoting characterization of a multinomial logit model.
-    
-    Link to paper referencing models, with analogous terminology:
-    https://statisticalhorizons.com/wp-content/uploads/2022/01/AllisonChristakis.pdf
-
-    Link to this 'pivoting' parameterization:
-    https://en.wikipedia.org/wiki/Multinomial_logistic_regression#As_a_set_of_independent_binary_regressions
+    See: https://en.wikipedia.org/wiki/Multinomial_logistic_regression#As_a_set_of_independent_binary_regressions
     """
     def __init__(self, j: int, parameters: Tuple[float, ...]):
         # j is number of categories there exist
@@ -52,20 +59,18 @@ class TiedRankingLogitModel:
 
     def evaluate_llhood(self, observed_ranking: Tuple[int, ...]):
         """
-        Returns None if not valid observation input
-
         Valid observation inputs are numeric upwards,
         to a maximum of j, each in the list index corresponding to an outcome specified
         in the parameters input.
         """
         # NOTE: Integer input currently based on Q CID output format
-        # Highest integer corresponds to 'best' ranked variable. 
-        # Then each subsequent lower integer (does not have to be sequential) is a lower level of preference.
+        # Highest integer corresponds to 'best (first)' ranked variable. 
+        # Then each subsequent lower integer (does not have to decrease sequentially) is a lower level of preference.
         
         llhood: float = 1.0  # product of llhoods, so we start with 1
 
         if len(set(observed_ranking)) == 1: # This ensures we do not get stuck in an infinite loop below, as ensures there are two distinct ranks.
-                                            # THIS IS NOT THE BEST - NEEDS FIX
+                                            # THIS IS NOT THE BEST WAY TO HANDLE IT - NEEDS FIX
             return llhood
 
         exponentiated_params = [exp(x) for x in self.parameters]
@@ -92,7 +97,7 @@ class TiedRankingLogitModel:
 
 class LatentClassSpecificWrapperModel:
     """
-    Here, you can nicely wrap up your underlying statistical models used in each of the latent classes
+    Here, you can wrap up the underlying statistical models used in each of the latent classes
     into one.
 
     Observations should be a tuple of observation inputs, which are valid inputs for the evaluate_llhood
