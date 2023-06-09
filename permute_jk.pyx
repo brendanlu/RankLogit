@@ -5,6 +5,7 @@ cimport cython
 # We turn off bounds checking an negative indicies to get C like speed
 @cython.boundscheck(False)
 @cython.wraparound(False)
+@cython.initializedcheck(False) # turn off Cython checking for memoryview initialization
 cdef float calc_product(double[:] a, Py_ssize_t n, double d):
 
     cdef double s = a[n-1] + d   # Inner sum
@@ -24,6 +25,7 @@ cdef float calc_product(double[:] a, Py_ssize_t n, double d):
 # We turn off bounds checking and negative indicies to get C like speed
 @cython.boundscheck(False)
 @cython.wraparound(False)
+@cython.initializedcheck(False) # turn off Cython checking for memoryview initialization
 def permuteexpression(t, dp):
 
     # We capture the length of the array as we will need that later
