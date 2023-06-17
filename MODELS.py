@@ -8,8 +8,7 @@ Will need to implement partial likelihood estsimation here as well.
 """
 
 import numpy as np
-from math import exp
-from typing import Tuple
+from typing import Tuple # 'iterable', see sklearn param_validation decorator
 
 # Cython code to generate, and perform relevent computations, across permutations of items
 import pyximport
@@ -73,7 +72,7 @@ class TiedRankingLogitModel:
                                             # THIS IS NOT THE BEST WAY TO HANDLE IT - NEEDS FIX
             return llhood
 
-        exponentiated_params = [exp(x) for x in self.parameters]
+        exponentiated_params = np.exp(np.asarray(self.parameters))
 
         enumerated = list(enumerate(observed_ranking))
         i = max(observed_ranking) # start with highest number in input tuple, and iterate down.
